@@ -21,6 +21,9 @@ kNN	94.23%	93.50%	97.10%	95.27%	98.12%	88.45%
 Logistic Regression	93.27%	92.45%	96.08%	94.23%	97.55%	86.50%
 Naive Bayes	90.38%	89.20%	94.12%	91.60%	95.30%	81.15%
 
+<img width="742" height="151" alt="image" src="https://github.com/user-attachments/assets/d9c1f822-e6ea-42cb-bddc-f7bbce0f0d9d" />
+
+
 Model Performance Analysis & Observations
 ML Model Name,Performance Level,Key Observations & Clinical Relevance
 Random Forest,Highest,"Excellent at capturing non-linear relationships between symptoms like Polyuria and Age. The ensemble nature prevents overfitting, making it the most reliable for diagnosis."
