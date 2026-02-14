@@ -1,0 +1,16 @@
+# Data Fetching and Handling
+ucimlrepo
+pandas
+numpy
+
+# Machine Learning & Preprocessing
+scikit-learn
+xgboost
+imbalanced-learn
+
+# Visualization
+matplotlib
+seaborn
+
+# Web Application
+streamlit
