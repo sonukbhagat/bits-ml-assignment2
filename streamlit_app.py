@@ -23,32 +23,27 @@ import os
 st.set_page_config(page_title="Diabetes Risk Performance Review", layout="wide")
 st.title("🩺 ML Classification Performance - Early Stage Diabetes Risk")
 
-# --- SIDEBAR: DATA UPLOAD ---
+# --- SIDEBAR: DATA UPLOAD --- [Step 5a requirement]
 st.sidebar.header("Step 1: Upload Test Data")
-uploaded_file = st.sidebar.file_uploader("Upload your raw test CSV (Yes/No format)", type="csv")
+uploaded_file = st.sidebar.file_uploader("Upload your raw test CSV", type="csv")
 
 # --- SIDEBAR: DOWNLOAD SAMPLE ---
-st.sidebar.header("Download Template")
 if os.path.exists("test_sample.csv"):
     with open("test_sample.csv", "rb") as file:
         st.sidebar.download_button(
-            label="Download Balanced Test CSV",
+            label="Download Template CSV",
             data=file,
             file_name="test_sample.csv",
-            mime="text/csv",
-            help="Use this file to test the models."
+            mime="text/csv"
         )
-else:
-    st.sidebar.warning("test_sample.csv not found in root.")
 
-# --- MAIN LOGIC ---
 if uploaded_file:
     # 1. Load Data
     raw_data = pd.read_csv(uploaded_file)
     st.write("### Raw Test Data Preview")
     st.dataframe(raw_data.head())
 
-    # 2. Model Selection
+    # 2. Model Selection [Step 5b requirement]
     st.sidebar.header("Step 2: Model Selection")
     model_option = st.sidebar.selectbox(
         'Which model would you like to evaluate?',
@@ -56,11 +51,10 @@ if uploaded_file:
     )
 
     try:
-        # 3. Load Artifacts from your /model directory
+        # Load Artifacts
         encoders = pickle.load(open('model/encoders.pkl', 'rb'))
         scaler = pickle.load(open('model/scaler.pkl', 'rb'))
 
-        # Map the dropdown selection to your specific .pkl filenames
         model_map = {
             'Logistic Regression': 'logistic_regression.pkl',
             'Decision Tree': 'decision_tree.pkl',
@@ -70,73 +64,58 @@ if uploaded_file:
             'XGBoost': 'xgboost.pkl'
         }
 
-        model_path = os.path.join('model', model_map[model_option])
-        model = pickle.load(open(model_path, 'rb'))
+        model = pickle.load(open(os.path.join('model', model_map[model_option]), 'rb'))
 
-        # 4. PREPROCESSING
+        # --- PREPROCESSING (FIXING CASE SENSITIVITY) ---
         processed_df = raw_data.copy()
+        # Force all columns to lowercase to match training
+        processed_df.columns = [c.lower() for c in processed_df.columns]
 
-        # Ensure 'Age' column is capitalized to match scaler expectations
-        processed_df.columns = [c.capitalize() if c.lower() == 'age' else c for c in processed_df.columns]
-
-        # Apply Label Encoding to Features using saved encoders
+        # Apply Label Encoding
         for col, le in encoders.items():
             if col != 'target' and col in processed_df.columns:
                 processed_df[col] = le.transform(processed_df[col])
 
-        # Apply Scaling to Age
-        if 'Age' in processed_df.columns:
-            processed_df['Age'] = scaler.transform(processed_df[['Age']])
+        # Apply Scaling to age (ensure col name is lowercase 'age')
+        if 'age' in processed_df.columns:
+            processed_df['age'] = scaler.transform(processed_df[['age']])
 
-        # Identify Target column (Standard UCI name is 'class')
+        # Identify Target
         target_col = 'class' if 'class' in processed_df.columns else 'target'
+        X_test = processed_df.drop(target_col, axis=1)
+        y_test = encoders['target'].transform(raw_data[target_col])
 
-        if target_col in processed_df.columns:
-            X_test = processed_df.drop(target_col, axis=1)
-            y_test_raw = raw_data[target_col]
-            y_test = encoders['target'].transform(y_test_raw)
-        else:
-            st.error("CSV must contain a 'class' or 'target' column.")
-            st.stop()
-
-        # 5. Generate Predictions
+        # 3. Predictions
         y_pred = model.predict(X_test)
         y_prob = model.predict_proba(X_test)[:, 1] if hasattr(model, "predict_proba") else y_pred
 
-        # --- DISPLAY METRICS  ---
+        # --- DISPLAY METRICS [Step 5c requirement] ---
         st.divider()
         st.subheader(f"📈 Performance Metrics: {model_option}")
 
         col1, col2, col3 = st.columns(3)
-        col1.metric("Accuracy", f"{accuracy_score(y_test, y_pred):.2%}")
+        col1.metric("Accuracy", f"{accuracy_score(y_test, y_pred):.4f}")
         col2.metric("AUC Score", f"{roc_auc_score(y_test, y_prob):.4f}")
-        col3.metric("F1 Score", f"{f1_score(y_test, y_pred):.4f}")
+        col3.metric("Precision", f"{precision_score(y_test, y_pred):.4f}")
 
         col4, col5, col6 = st.columns(3)
-        col4.metric("Precision", f"{precision_score(y_test, y_pred):.4f}")
-        col5.metric("Recall", f"{recall_score(y_test, y_pred):.4f}")
+        col4.metric("Recall", f"{recall_score(y_test, y_pred):.4f}")
+        col5.metric("F1 Score", f"{f1_score(y_test, y_pred):.4f}")
         col6.metric("MCC Score", f"{matthews_corrcoef(y_test, y_pred):.4f}")
 
-        # --- VISUAL ANALYSIS  ---
+        # --- VISUALS [Step 5d requirement] ---
         st.divider()
-        viz_col1, viz_col2 = st.columns(2)
-
-        with viz_col1:
+        viz1, viz2 = st.columns(2)
+        with viz1:
             st.markdown("**Classification Report**")
             st.text(classification_report(y_test, y_pred))
-
-        with viz_col2:
+        with viz2:
             st.markdown("**Confusion Matrix**")
             fig, ax = plt.subplots(figsize=(5, 4))
-            sns.heatmap(confusion_matrix(y_test, y_pred), annot=True, fmt='d', cmap='Blues', ax=ax)
-            plt.ylabel('Actual')
-            plt.xlabel('Predicted')
+            sns.heatmap(confusion_matrix(y_test, y_pred), annot=True, fmt='d', cmap='Blues')
             st.pyplot(fig)
 
-    except FileNotFoundError as e:
-        st.error(f"Missing File: {e}. Check your 'model/' folder.")
     except Exception as e:
         st.error(f"Error: {e}")
-
 else:
-    st.info("👋 Upload 'test_sample.csv' to evaluate model performance.")
+    st.info("Please upload a test CSV to begin.")
