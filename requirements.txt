@@ -1,5 +1,6 @@
-# Data Fetching and Handling
-ucimlrepo
+# Web Application & Dependencies
+streamlit>=1.31.1
+altair<5
 pandas
 numpy
 
@@ -7,10 +8,8 @@ numpy
 scikit-learn
 xgboost
 imbalanced-learn
+ucimlrepo
 
 # Visualization
 matplotlib
 seaborn
-
-# Web Application
-streamlit
