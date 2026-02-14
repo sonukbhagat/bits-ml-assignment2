@@ -17,8 +17,11 @@ The following table summarizes the evaluation metrics calculated for all 6 manda
 
 <img width="603" height="246" alt="image" src="https://github.com/user-attachments/assets/383ffb86-07b8-479a-98dc-af1f4b3ad6a7" />
 
-Model Performance Observations
+
+Model Performance Observations:
+
 <img width="691" height="364" alt="image" src="https://github.com/user-attachments/assets/6a12eda5-b701-40d1-b120-631048be04da" />
+
 Based on the experimental results above, the following observations are noted:
 Top Performer: Random Forest achieved perfect scores across all metrics (1.0000), indicating it successfully captured all patterns within this specific clinical dataset without overfitting during this evaluation.
 Tree-Based Dominance: Both Random Forest and Decision Tree outperformed linear and probabilistic models, suggesting that the underlying symptoms of diabetes in this dataset have strong non-linear decision boundaries.
